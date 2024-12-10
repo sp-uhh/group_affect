@@ -1,0 +1,37 @@
+{
+    
+    "train_name": "mlp_audiovisual_basic_and_synchrony",
+
+    "datasplit_manifest" : "spkr_partitions.txt",
+    "features_format": "indivfeats-subfeats-aggfeats-tempagg",
+    "base_features": ["pitch", "intensity", "mfcc", "vggish", "aucs", "facepose"],
+    "use_syncfeats": true,
+    "only_syncfeats": false,
+    
+    "train_type": "batched",
+    "model_name": "mlp",
+    "labels" : "GT",
+    "loss_term": "ccc",
+    "nlabels": 2,
+    "model_dynamics": false,
+
+    "num_gpus": 1,
+    "gpu": 0,
+    "batch_size": 16,
+    "learning_rate": 0.001,
+    "adam_b1": 0.8,
+    "adam_b2": 0.99,
+    "lr_decay": 0.999,
+    "weight_decay": 0.01,
+    "seed": 1234,
+    "nepoch": 100,
+    "train_summary_interval": 1,
+    "eval_summary_interval": 2,
+    "patience": 20,
+
+    "video_sampling_rate": 60,
+    "audio_sampling_rate": 16000
+
+
+
+}

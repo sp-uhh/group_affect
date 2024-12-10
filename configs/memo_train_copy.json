@@ -1,0 +1,33 @@
+{
+    
+    "train_name": "test",
+
+    "datasplit_manifest" : "",
+
+    "features": ["pitch--mean-", "pitch--std-", "pitch--grad-", "mfcc-0-mean-", "intensity--mean-", "intensity--grad-",
+                 "pitch--synchrony_corrcoeff-mean", "aucs-AU07-synchrony_corrcoeff-mean", "aucs-AU20-synchrony_maxcorr-mean", "aucs-AU20-convergence_symmetric-mean"],
+
+    "indivfeats_list": ["pitch", "pitch", "mfcc", "intensity", "intensity", "pitch", "aucs", "aucs", "facepose"],
+    "subfeats_list": ["", "", "0", "", "", "", "AU07", "AU20", "headroll"],
+    "aggfeats_list": ["mean", "std", "mean", "mean", "grad", "synchrony_corrcoeff", "synchrony_corrcoeff", "synchrony_maxcorr", "convergence_symmetric"],
+    "temporal_agg": ["mean"],
+
+    "model_name": "",
+    "labels" : "gt",
+    "loss_terms": [],
+
+    "num_gpus": 1,
+    "gpu": 0,
+    "batch_size": 16,
+    "learning_rate": 0.0002,
+    "adam_b1": 0.8,
+    "adam_b2": 0.99,
+    "lr_decay": 0.999,
+    "seed": 1234,
+
+    "video_sampling_rate": 60,
+    "audio_sampling_rate": 16000
+
+
+
+}
