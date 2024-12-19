@@ -1,17 +1,27 @@
-# Group Affect [Modeling and Analysis] - MEMO Corpus
+# Dynamics of Collective Group Affect: Group-level Annotations and the Multimodal Modeling of Convergence and Divergence
 
-## Data Collection and analysis
+This repository contains the codebase for the paper:
 
-1. Annotation Analysis
-2. Inter-annotator agreement
-3. Label Preprocessing
+Navin Raj Prabhu, Maria Tsfasman, Catharine Oertel, Timo Gerkmann, Nale Lehmann-Willenbrock, "Dynamics of Collective Group Affect: Group-level Annotations and the Multimodal Modeling of Convergence and Divergence", Under Review, Submitted to  IEEE Transactions on Affective Computing, Sep, 2024. [arxiv](https://arxiv.org/abs/2409.08578)
+
+
+The repository contains the following:
+
+## Data and analysis
+
+1. Data Reader and Classes
+2. Annotation Analysis
+3. Inter-annotator agreement
 4. Ground-truth consensus
 
 
 ## Modeling
 
-1. Individual-level feature extractors (with temporal analysis, and w/o)
-   1. Audio (prosody + lexical)
+1. Individual-level feature extractors 
+   1. Audio (prosody)
    2. Video
-2. Group-level representation modeling 
-3. Group Affect recognition
+2. Dyad-level feature extractors
+   1. Synchrony (correlation, lagged correlation)
+   2. Convergence (global, symmetric and asymmetric)
+2. Convergence and Divergence analysis
+3. Group Affect recognition baselines
