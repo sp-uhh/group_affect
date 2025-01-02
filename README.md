@@ -20,7 +20,7 @@ The repository contains the following:
 1. [Individual-level feature extractors](https://github.com/sp-uhh/group_affect/tree/main/feature_extractor)
    1. Audio (prosody)
    2. Video
-2. [Dyad-level feature extractors](https://github.com/sp-uhh/group_affect/tree/main/groupsync/features/dyadic)
+2. [Dyad-level feature extractors](https://github.com/sp-uhh/group_affect/tree/main/groupsync/features/dyadic) ([Jobs](https://github.com/sp-uhh/group_affect/tree/main/jobs) for feature extraction available)
    1. Synchrony (correlation, lagged correlation)
    2. Convergence (global, symmetric and asymmetric)
 2. [Convergence and Divergence analysis](https://github.com/sp-uhh/group_affect/tree/main/analysis/features)
