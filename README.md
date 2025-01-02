@@ -24,4 +24,4 @@ The repository contains the following:
    1. Synchrony (correlation, lagged correlation)
    2. Convergence (global, symmetric and asymmetric)
 2. Convergence and Divergence analysis
-3. Group Affect recognition baselines
+3. [Group Affect recognition baselines](https://github.com/sp-uhh/group_affect/blob/main/models.py) (Use [configs](https://github.com/sp-uhh/group_affect/tree/main/configs) for baseline versions) 
