@@ -9,7 +9,7 @@ The repository contains the following:
 
 ## Data and analysis
 
-1. Data Reader and Classes
+1. [Data Reader and Classes](https://github.com/sp-uhh/group_affect/tree/main/readers)
 2. Annotation Analysis
 3. Inter-annotator agreement
 4. Ground-truth consensus
