@@ -19,7 +19,6 @@ class MLP(nn.Module):
         self.lstm = nn.LSTM(config.nfeatures, config.nfeatures,
                             2, bidirectional=False, batch_first=True)
 
-
         self.dense1 = nn.Linear(config.nfeatures, 128)
         self.act1   = nn.ReLU(inplace=True)
         self.norm1  = nn.BatchNorm1d(128, affine=True)
@@ -31,11 +30,8 @@ class MLP(nn.Module):
         self.out = nn.Linear(64, config.nlabels)
         
     def forward(self, x):
-        # print("Inside MLP Model")
-        # print("Shape of x: ", x.shape)
         
         x, (hn, cn)  = self.lstm(x)
-        # print("Shape of x after lstm: ", x.shape)
                 
         x = self.dense1(x)
         x = self.act1(x)
