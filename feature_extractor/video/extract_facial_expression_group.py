@@ -8,7 +8,7 @@ import pandas as pd
 from tqdm import tqdm
 from feat import Detector
 
-from utilities.data import get_MEMO_dataset
+from utilities.dataset import get_MEMO_dataset
 import utilities.data as data_utils
 import constants as c
 

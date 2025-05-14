@@ -15,7 +15,6 @@ from torch.utils.data import Dataset, DataLoader
 from readers.memo_interactions import Interactions
 from readers.utils.utils import get_interaction_fname, get_interaction_id, get_featurekey
 from utilities.data import concat_pd, NormalizeData, concat_np
-from utilities.agreement_utils import calculate_goldstandard_gt
 from readers.loader_features import load_individual_features, load_group_features
 
 np.set_printoptions(threshold=sys.maxsize)
@@ -99,6 +98,8 @@ class MEMOGroupAff:
         self.offset  = "Offset_Time"
         
         self.labels_df = None
+        
+        self.indiv_gcn_feats = None
 
 
     def get_interactions_df(self):
@@ -121,27 +122,41 @@ class MEMOGroupAff:
         # Video
         self.load_featureset("aucs")
         self.load_featureset("facepose")
+        
+    
     
     def combine_features_for_interaction(self, interaction):
         feats_df = None
-        # if self.config.model_dynamics:
         for key in interaction.audio_feats.keys():
-            curr_feat = np.expand_dims(interaction.audio_feats[key], axis=1)
-            feats_df = concat_np(feats_df, curr_feat, axis=1)
+            if "concatenate" in key:
+                curr_feat = np.expand_dims(interaction.audio_feats[key], axis=-1)
+                feats_df = concat_np(feats_df, curr_feat, axis=-1)
+            else:
+                curr_feat = interaction.audio_feats[key]
+                if len(curr_feat.shape) == 1:
+                    curr_feat = np.expand_dims(interaction.audio_feats[key], axis=1)
+                if interaction.id == "group12_session3" and curr_feat.shape[0] == 188:
+                    curr_feat = curr_feat[:186]
+                feats_df = concat_np(feats_df, curr_feat, axis=1)
+            
         for key in interaction.video_feats.keys():
-            curr_feat = np.expand_dims(interaction.video_feats[key], axis=1)
-            feats_df = concat_np(feats_df, curr_feat, axis=1)
-        # else:
-        #     if len(interaction.audio_feats.keys()) > 0 and len(interaction.video_feats.keys()) > 0:
-        #         audio_feat_df = pd.DataFrame.from_dict(interaction.audio_feats)
-        #         video_feat_df = pd.DataFrame.from_dict(interaction.video_feats)
-        #         feats_df = concat_pd(audio_feat_df, video_feat_df, axis=1)
-        #     elif len(interaction.audio_feats.keys()) > 0:
-        #         audio_feat_df = pd.DataFrame.from_dict(interaction.audio_feats)
-        #         feats_df = audio_feat_df
-        #     elif len(interaction.video_feats.keys()) > 0:
-        #         video_feat_df = pd.DataFrame.from_dict(interaction.video_feats)
-        #         feats_df = video_feat_df
+            if "concatenate" in key:
+                curr_feat = interaction.video_feats[key] # Video features are already 3D: aucs and facepose
+                feats_df = concat_np(feats_df, curr_feat, axis=-1)
+            else:
+                curr_feat = interaction.video_feats[key]
+                if len(curr_feat.shape) == 1:
+                    curr_feat = np.expand_dims(interaction.video_feats[key], axis=1)
+                if interaction.id == "group12_session3" and curr_feat.shape[0] == 188:
+                    curr_feat = curr_feat[:186]
+                feats_df = concat_np(feats_df, curr_feat, axis=1)
+        
+        if "concatenate" in key:
+            feats_df = torch.Tensor(feats_df)
+            feats_df = feats_df.permute(1, 0, 2).numpy()
+            # Pad feats_df with zeros to make the dimension 1 = c.MAX_GROUP_SIZE
+            if feats_df.shape[1] < c.MAX_GROUP_SIZE:
+                feats_df = np.pad(feats_df, ((0, 0), (0, c.MAX_GROUP_SIZE - feats_df.shape[1]), (0, 0)), 'constant')
         
         return feats_df            
     
@@ -156,17 +171,17 @@ class MEMOGroupAff:
         for interaction in self.interactions_df:
             feats_df = self.combine_features_for_interaction(interaction)
             data_df = concat_np(data_df, feats_df, axis=0)
-            
             interactionIDs.extend(np.repeat(interaction.group+'_'+interaction.session, feats_df.shape[0]))
             
-        # data_df["interactionID"] = interactionIDs
         return data_df, np.array(interactionIDs)
     
               
     def load_dataset(self):
         # Loading Dataset
         features, interactionIDs = self.dataset_stack_features() # get_featurekey(ftype, feature, sub_feature)
-        
+        print("Features shape: ", features.shape)
+        print("InteractionIDs shape: ", interactionIDs.shape)
+
         ## Load Labels
         ids = self.labels_df["interactionID"].values
         onset  = self.labels_df["onsetTime"].values
@@ -176,22 +191,13 @@ class MEMOGroupAff:
         arousGT  = self.labels_df["ArousalGT"].values
         valenGT  = self.labels_df["ValenceGT"].values
         
+        print("ids shape: ", ids.shape)
         # Check Sync
         if np.array_equal(interactionIDs, ids):
             print("DATASET STACKING is IN SYNC ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         else:
             print(np.setdiff1d(ids, interactionIDs))
             print("WARNING!!!!!!!!!!!!!!!!!! DATASET STACKING is NOT IN SYNC !!!!!!!!!!!!!!!")
-
-        # self.dataset = {}
-        # self.dataset["features"]       = features 
-        # self.dataset["interactionID"]  = ids
-        # self.dataset["onsetTime"]      = onset
-        # self.dataset["offsetTime"]     = offset
-        # self.dataset["ArousalAvg"]     = arousAvg
-        # self.dataset["ValenceAvg"]     = valenAvg
-        # self.dataset["ArousalGT"]      = arousGT
-        # self.dataset["ValenceGT"]      = valenGT
         
         self.dataset = (ids, features, onset, offset, arousAvg, valenAvg, arousGT, valenGT)
     
@@ -213,14 +219,6 @@ class MEMOGroupAff:
     
     def partition_dataset(self):
         assert self.dataset is not None, "Config for dataset creation not set.!!!!"
-        
-        # train_ids  = self.partitions_data.loc[self.partitions_data['Partition'] == 'Train']["InteractionID"].values        
-        # valid_ids  = self.partitions_data.loc[self.partitions_data['Partition'] == 'Validation']["InteractionID"].values
-        # test_ids   = self.partitions_data.loc[self.partitions_data['Partition'] == 'Test']["InteractionID"].values
-                
-        # train_data = self.dataset.loc[self.dataset['interactionID'].isin(train_ids)] # list(filter(lambda x: x[0] in train_ids, self.dataset))
-        # valid_data = self.dataset.loc[self.dataset['interactionID'].isin(valid_ids)] # list(filter(lambda x: x[0] in valid_ids, self.dataset))
-        # test_data  = self.dataset.loc[self.dataset['interactionID'].isin(test_ids)]  # list(filter(lambda x: x[0] in test_ids, self.dataset))
 
         train_data = self.tuple_datapartitions(partition='Train')
         valid_data = self.tuple_datapartitions(partition='Validation')
@@ -408,6 +406,7 @@ class MEMOGroupAff:
 
 
     def load_featureset(self, ftype, level=["participant"]):
+        
         assert self.interactions_df is not None, "Interaction DF is None. Run- --from utilities.data import get_MEMO_dataset-- First . "
         for interaction in self.interactions_df:
             if "participant" in level:
@@ -416,37 +415,24 @@ class MEMOGroupAff:
                 interaction.load_group_feature(ftype)    
     
     def load_aggregated_featset(self, ftype, agg_type=np.mean, temporal_agg=True, normalize=False, sub_feat=None):
-        # assert getattr(self.interactions_df[0], ftype) is not None, "Feature is not extracted at participant level. "
+
         for interaction in self.interactions_df:
             agg_feats = interaction.extract_aggregate_group_feats(ftype, agg_type, temporal_agg, normalize)
-            # if ftype == "mfcc":
-            #     agg_feats = agg_feats[..., int(sub_feat)]
-            # elif ftype == "aucs":
-            #     agg_feats = agg_feats[..., c.AUCS_FEATURES.index(sub_feat)]
-            # elif ftype == "facepose":
-            #     agg_feats = agg_feats[..., c.FACEPOSE_FEATURES.index(sub_feat)]
 
-            # if interaction.id == "group12_session3" and interaction.get_ftype_modality(ftype) == "audio":
-            #     if agg_feats.shape[0] != 188:
-            #         print(agg_feats.shape)
-            #         agg_feats = concat_np(agg_feats, np.expand_dims(agg_feats[-1], axis=0), axis=0) # Repeat last row once
-            #         agg_feats = concat_np(agg_feats, np.expand_dims(agg_feats[-1], axis=0), axis=0) # Repeat last row once
-            #         print("after", agg_feats.shape)
-                
-            interaction.set_aggregate_group_feats(agg_feats, ftype, agg_type=agg_type.__name__)#, sub_feat=sub_feat)
+            if agg_type.__name__ == "concatenate" and "mfcc" in ftype:
+                # MFCC Based Features are 2D, so no need to add sub_feat
+                # Also in concatenation based features for GCN
+                interaction.set_aggregate_group_feats(agg_feats[:,:,0], ftype, agg_type=agg_type.__name__, sub_feat="0")
+                interaction.set_aggregate_group_feats(agg_feats[:,:,1], ftype, agg_type=agg_type.__name__, sub_feat="1")
+                interaction.set_aggregate_group_feats(agg_feats[:,:,2], ftype, agg_type=agg_type.__name__, sub_feat="2")
+            else:                   
+                interaction.set_aggregate_group_feats(agg_feats, ftype, agg_type=agg_type.__name__)#, sub_feat=sub_feat)
             
     def load_synchrony_convergence_featset(self, ftype, feature, sub_feature, groupagg=None):
         for interaction in self.interactions_df:
             modality = interaction.get_ftype_modality(feature)
             synconv_feats = interaction.get_group_feats(ftype, feature, sub_feature, modality)
             feature_key = get_featurekey(ftype, feature, sub_feature)
-
-            # if groupagg is not None:
-            #     synconv_feats = synconv_feats[groupagg].values
-            #     feature_key = feature_key + "_" + groupagg
-            # if interaction.id == "group12_session3" and modality == "audio":
-            #     synconv_feats = concat_np(synconv_feats, np.expand_dims(synconv_feats[-1], axis=0), axis=0) # Repeat last row once
-            #     synconv_feats = concat_np(synconv_feats, np.expand_dims(synconv_feats[-1], axis=0), axis=0) # Repeat last row once
                 
             interaction.set_group_feats(synconv_feats, feature_key, modality)
         
@@ -471,7 +457,3 @@ class MEMOGroupAff:
     def get_dataset_audios(self, req_interactions):
         pass
     ######################################## Audios Processing ########################################
-    
-    
-    
-    

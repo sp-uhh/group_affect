@@ -247,9 +247,6 @@ class Interactions:
         else:
             for participant in self.participants:
                 feat = participant.get_feature(ftype)
-                if self.id == "group12_session3" and get_modality(ftype) == "audio":
-                    feat = data_util.concat_np(feat, np.expand_dims(feat[-1, :], axis=0), axis=0) # Repeat last row once
-                    feat = data_util.concat_np(feat, np.expand_dims(feat[-1, :], axis=0), axis=0) # Repeat last row once
                 participant.set_feature(ftype, feat)
     
     def get_ftype_modality(self, ftype, feature=''):
@@ -318,15 +315,19 @@ class Interactions:
         stacked_participants_feats = None
         for participant in self.participants:
             part_feats = participant.get_feature(ftype)
-            if temporal_agg:
-                # print("Before Segment Feats calc ", part_feats.shape)
+            num_segments, feat_dims = part_feats.shape[0], part_feats.shape[1]
+            if temporal_agg: 
                 part_feats = participant.calculate_segment_feats(part_feats, modality=self.get_ftype_modality(ftype))
             if normalize:
                 part_feats = (part_feats - np.mean(part_feats))/np.std(part_feats)
             part_feats = np.expand_dims(part_feats, axis=0)
             stacked_participants_feats = data_util.concat_np(stacked_participants_feats, part_feats)
-        agg_feats = agg_type(stacked_participants_feats, axis=0)
-        return agg_feats
+
+        if agg_type.__name__ != "concatenate":
+            agg_feats = agg_type(stacked_participants_feats, axis=0)
+            return agg_feats
+        else:
+            return stacked_participants_feats
     
     def get_aggregate_group_feats(self, ftype, agg_type="mean"):
         feats_dict = self.audio_feats if self.get_ftype_modality(ftype) == "audio" else self.video_feats

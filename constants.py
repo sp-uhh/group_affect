@@ -82,3 +82,5 @@ SUBFEATS = {
                 'aucs':AUCS_FEATURES,
                 'facepose':FACEPOSE_FEATURES
             }
+
+MAX_GROUP_SIZE = 6

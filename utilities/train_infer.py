@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 import constants as c
 from utilities.loss import CCCLoss
 from utilities.data import concat_np
-from utilities.model import build_mlp
+from utilities.model import build_mlp, build_gcn
 from sklearn.metrics import mean_squared_error
 
 class AttrDict(dict):
@@ -63,6 +63,8 @@ def get_model(config):
         model = make_pipeline(SimpleImputer(missing_values=np.nan, strategy='mean'), PolynomialFeatures(degree=4), LinearRegression())
     elif config.model_name == "mlp":
         model = build_mlp(config)
+    elif config.model_name == "gcn":
+        model = build_gcn(config)
 
     return model
 
