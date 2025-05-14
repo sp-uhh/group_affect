@@ -1,0 +1,25 @@
+.idea/
+__pycache__/
+__pycache__
+.data/
+
+# Files
+*.pdf
+*.csv
+*.png
+*.jpg
+*.jpeg
+*.err
+*.out
+*.job
+*.pkl
+*.mp4
+*.wav
+*.npy
+
+groupsync
+
+# Dataset Folder
+dataset
+MEMO_GroupAffect
+checkpoints
