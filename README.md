@@ -24,6 +24,6 @@ The repository contains the following:
    1. Synchrony (correlation, lagged correlation)
    2. Convergence (global, symmetric and asymmetric)
 2. [Convergence and Divergence analysis](https://github.com/sp-uhh/group_affect/tree/main/analysis/features)
-3. [Group Affect recognition baselines](https://github.com/sp-uhh/group_affect/blob/main/models.py) (Use [configs](https://github.com/sp-uhh/group_affect/tree/main/configs) for baseline versions)
+3. [Group Affect recognition models](https://github.com/sp-uhh/group_affect/blob/main/models.py) (Use [configs](https://github.com/sp-uhh/group_affect/tree/main/configs) for model versions)
    1. Multi-layer Perceptron based model
    2. Graph Attention Network based model
